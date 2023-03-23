@@ -194,6 +194,7 @@ describe('secp256k1', () => {
     it('should create deterministic signatures with RFC 6979', async () => {
       for (const vector of ecdsa.valid) {
         let usig = await secp.sign(vector.m, vector.d, { der: false });
+        console.log(123123);
         let sig = hex(usig);
         const vsig = vector.signature;
         expect(sig.slice(0, 64)).toBe(vsig.slice(0, 64));
