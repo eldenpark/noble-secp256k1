@@ -121,7 +121,7 @@ function assertJacPoint(other: unknown) {
  * We're doing calculations in jacobi, because its operations don't require costly inversion.
  */
 class JacobianPoint {
-  constructor(readonly x: bigint, readonly y: bigint, readonly z: bigint) {}
+  constructor(readonly x: bigint, readonly y: bigint, readonly z: bigint) { }
 
   static readonly BASE = new JacobianPoint(CURVE.Gx, CURVE.Gy, _1n);
   static readonly ZERO = new JacobianPoint(_0n, _1n, _0n);
@@ -449,7 +449,7 @@ export class Point {
   // stores precomputed values. Usually only base point would be precomputed.
   _WINDOW_SIZE?: number;
 
-  constructor(readonly x: bigint, readonly y: bigint) {}
+  constructor(readonly x: bigint, readonly y: bigint) { }
 
   // "Private method", don't use it directly
   _setWindowSize(windowSize: number) {
@@ -1058,6 +1058,8 @@ function isValidFieldElement(num: bigint): boolean {
 function kmdToSig(kBytes: Uint8Array, m: bigint, d: bigint, lowS = true): RecoveredSig | undefined {
   const { n } = CURVE;
   const k = truncateHash(kBytes, true);
+  console.log('kBytes: %s\nk: %o', kBytes, k);
+
   if (!isWithinCurveOrder(k)) return;
   // Important: all mod() calls in the function must be done over `n`
   const kinv = invert(k, n);
@@ -1267,12 +1269,18 @@ async function sign(msgHash: Hex, privKey: PrivKey, opts?: OptsNoRecov): Promise
 async function sign(msgHash: Hex, privKey: PrivKey, opts: Opts = {}): Promise<SignOutput> {
   // Steps A, D of RFC6979 3.2.
   const { seed, m, d } = initSigArgs(msgHash, privKey, opts.extraEntropy);
+
+  console.log('seed: %s\nmsgHash: %s, m: %s\nd: %s', seed, msgHash, m, d);
+
   // Steps B, C, D, E, F, G
   const drbg = new HmacDrbg(hashLen, groupLen);
   await drbg.reseed(seed);
   // Step H3, repeat until k is in range [1, n-1]
   let sig: RecoveredSig | undefined;
   while (!(sig = kmdToSig(await drbg.generate(), m, d, opts.canonical))) await drbg.reseed();
+
+  console.log('signature: %o', sig);
+
   return finalizeSig(sig, opts);
 }
 
